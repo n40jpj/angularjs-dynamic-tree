@@ -1,0 +1,266 @@
+
+
+    div, span {
+        background-color:transparent;
+    }
+
+    .node {
+        -moz-user-select: -moz-none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        font-family: source_sans_proregular, 'Segoe UI', Verdana, Helvetica, sans-serif;
+        color: black;
+        text-decoration:none;
+        background-color:transparent;
+        display: block;
+    }
+
+    .nodepart {
+         
+        -moz-user-select: -moz-none;
+        -khtml-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        color: #555;
+        text-decoration:none;
+        background-color:transparent;
+        display:inline-block;
+        vertical-align:middle;
+    }
+
+        
+
+     nodepartlabel :hover {
+        background:red; 
+        background-color:transparent;
+    }
+
+    .isSearchResult {
+        background-color:yellow !important;
+        /*border: 2px dashed black;*/
+        
+    }
+
+    .isNotSearchResult {
+        
+    }
+    
+    .warning {
+        background-color:red;
+    }
+
+    .tf_dropBox_hover > div > a {
+        background-color:yellow !important;
+        border: 0.5px dashed black; 
+    }
+
+    .tf_dropBox_active > div > a {
+        background-color:yellow;
+        
+    }
+    
+    .itemHeader {
+        background-color:blue;
+    }
+
+    .ui-widget-content {
+        border: 1px solid #aaaaaa;
+        background: #ffffff;
+        color: #222222;
+        }
+    
+    
+    .tree ul {
+        background-color:transparent;
+        list-style: none;
+        border: none;
+        overflow: hidden;
+        display: block;
+        margin: 0 0 0 0;
+        padding: 0 0 0 0;
+        list-style-type: none;
+        vertical-align:middle;
+
+    }
+
+    .tree li {
+
+        display: block;
+        line-height: 17px;
+        position: relative;
+        padding: 0 0 0 0px;
+        
+        background-color:transparent;
+        list-style-type: none;
+        margin-bottom: 0px;
+        margin-left: 10px;
+        margin-right: 0px;
+        margin-top: 0px;
+        min-height: 17px;
+        min-width: 18px;
+
+        text-align: left;
+        visibility: visible;
+        white-space: nowrap;
+
+    }
+
+    .tree li div {
+        min-height: 18px;
+    }
+    .tree li div .endNode {
+        height: 18px !important;
+        
+    }
+
+    .tree a:hover {
+        background-color: transparent;
+    }
+
+    .tree li div > a {
+        vertical-align:top; 
+        text-decoration: none !important;
+        box-sizing: border-box;
+        color: rgb(0, 0, 0);
+        cursor: pointer;
+        display: inline-block;
+        font-family: source_sans_proregular, 'Segoe UI', Verdana, Helvetica, sans-serif;
+        font-size: 14px;
+        height: 17px;
+        line-height: 17px;
+        list-style-type: none;
+        
+        margin: 0px 0px 0px 0px;
+
+        padding: 0px;
+        /*
+        text-decoration: none solid rgb(0, 0, 0);*/
+                
+        }
+
+    .tree ins {
+        display: inline-block;
+        text-decoration: none;
+        width: 16px;
+        height: 17px;
+        margin: 0 3px 0 0px;
+        color: black;
+        background-color:transparent;
+        vertical-align:top;
+        
+    }
+
+    .tree a ins {
+        height: 17px;
+        width: 16px;
+        padding: 0px;
+        margin: 0px;
+        margin: 0 0 0 3px;
+        vertical-align:top;
+        
+    }
+
+    .tree a label {
+        height: 17px;
+        font-weight:normal;
+        display:inline-block;
+        vertical-align:top;    
+        margin: 0 0 0 0px;
+        padding:0px 0px 0px 5px;  
+        line-height:17px !important;
+    }
+    
+    .tree a:hover{
+       background-color:lightblue;
+    }
+    
+    .tree li i, tree li span div label {
+        cursor: pointer;
+    }
+
+    .tree li .selected {
+        background-color: #aaddff;
+        padding: 1px 5px;
+    }
+
+    .dots {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-position:-90px 0; 
+        background-repeat:repeat-y;
+        background-color:transparent;
+    }
+
+    .leaf {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-position:-36px -2px;
+    }
+
+
+    /* Tree node - */
+    .open-tree {
+        
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-repeat:no-repeat;
+        background-color:transparent;
+        background-position:-72px -2px;
+        /*width:16px !important;*/
+        margin: 0px 3px 0px 0px !important;
+    }
+
+    .closed {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-repeat:no-repeat;
+        background-color:transparent;
+        background-position:-54px -2px;
+        /*width:16px !important;*/
+        margin: 0px 3px 0px 0px !important;
+    }
+
+    /*Expanded folder*/
+    .folder {
+        background-image: url("/scripts/modules/Tree/theme/folder.png");
+        /*background-image: url("/scripts/modules/Tree/theme/fugue-icons-10.png");*/
+        background-repeat: no-repeat;
+        background-color: transparent;
+        background-position: 0 0;
+        /*background-position: 0px -1672px;*/
+        width: 18px !important;
+        /*height: 16px;*/
+    }
+
+    .checkedSome {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-position: -20px -19px;
+        background-repeat: no-repeat;
+        background-color: transparent;
+    }
+
+    .checkedImg {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-position: -38px -19px;
+        background-repeat: no-repeat;
+        background-color: transparent;
+    }
+
+    .checkedNone {
+        background-image:url("/scripts/modules/Tree/theme/d.png");
+        background-position: -2px -19px;
+        background-repeat: no-repeat;
+        background-color: transparent;
+    }
+    
+   
+    .doc {
+        background-image: url(/scripts/modules/Tree/theme/fugue-icons-8.png);
+        background-position: 0 -1235px;
+        background-repeat:no-repeat;
+        background-color:transparent;
+        width: 18px !important;
+        height: 17px;
+        
+    }
+
+
