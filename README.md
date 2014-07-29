@@ -117,4 +117,4 @@ I have included a very basic demonstration project with the source code, for you
 * Karma tests.
 
 #Other Projects#
-I tend to keep all of my projects, past and present at <www.development.n40jpj.com>
+I tend to keep all of my projects, past and present at <http://www.development.n40jpj.com>
