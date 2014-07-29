@@ -1,4 +1,4 @@
-# AngualrJS Dynamic Tree View #
+# AngularJS Dynamic Tree View #
 
 ##About this Project##
 
