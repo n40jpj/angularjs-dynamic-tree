@@ -10,10 +10,10 @@ angular.module('tree.service', [])
         var expandedNodeList = [];
 
         return {
-            setExpnadedNode: function (value) {
+            setExpandedNode: function (value) {
                 expandedNodeList.push(value);
             },
-            removeExpnadedNode: function (value) {
+            removeExpandedNode: function (value) {
                 expandedNodeList.splice(expandedNodeList.indexOf(value), 1);
             },
             findExpandedNode: function (value) {
@@ -419,9 +419,9 @@ angular.module('tree.directive', [])
                     $event.preventDefault();
                     $scope.node.attr.expanded = !$scope.node.attr.expanded;
                     if ($scope.node.attr.expanded) {
-                        NodeTrackingService.setExpnadedNode($scope.node.attr.documentGroupId);
+                        NodeTrackingService.setExpandedNode($scope.node.attr.documentGroupId);
                     } else {
-                        NodeTrackingService.removeExpnadedNode($scope.node.attr.documentGroupId);
+                        NodeTrackingService.removeExpandedNode($scope.node.attr.documentGroupId);
                     }
                 };
 
