@@ -1,415 +1,258 @@
 
 angular.module('treeModule', ['tree.service', 'tree.factory', 'tree.directive', 'contextMenuModule']);
 
-angular.module('tree.service', [])
-    .service("NodeTrackingService", function () {
-        var node = {};
-        var nodeList = [];
-        var clickedNode = {};
-        var hoveredNode = {};
-        var expandedNodeList = [];
-
-        return {
-            setExpandedNode: function (value) {
-                expandedNodeList.push(value);
-            },
-            removeExpandedNode: function (value) {
-                expandedNodeList.splice(expandedNodeList.indexOf(value), 1);
-            },
-            findExpandedNode: function (value) {
-                for (var i = 0; i < expandedNodeList.length; i++) {
-                    if (expandedNodeList[i] == value) {
-                        return true;
-                    }
-                }
-                return false;
-            },
-            getSelectedNode: function () {
-                    return node;
-                },
-            setSelectedNode: function (value) {
-                node = value;
-                if (value.attr.isEndNode) {
-                    var newNode = {
-                        DocumentId: value.attr.documentId,
-                        DocumentGroupId: value.attr.documentGroupId,
-                        DocumentTypeId: value.attr.documentTypeId,
-                        DocumentTitle: value.data.title
-                    };
-
-                    var alreadyAdded = false;
-                    
-                    for (var i = 0; i < nodeList.length ; i++)
-                    {
-                        if (nodeList[i].DocumentId == value.attr.documentId) {
-                            alreadyAdded = true;
-                        }
-                    }
-
-                    if (!alreadyAdded) {
-                        nodeList.push(newNode);
-                    }
-                }
-            },
-            removeSelectedNode: function (value) {
-                node = value;
-                if (value.attr.isEndNode) {
-                    for (var i = 0; i < nodeList.length ; i++) {
-                        if (nodeList[i].DocumentId == value.attr.documentId) {
-                            nodeList.splice(i, 1);
-                            
-                        }
-                    }
-                }
-            },
-            getSelectedNodeList: function () {
-                return nodeList;
-            },
-            getSelectedNodeListOfIds: function () {
-                var selectedNodeIds = [];
-                for (var i = 0; i < nodeList.length; i++) {
-                    selectedNodeIds.push(nodeList[i].DocumentId);
-                }
-                return selectedNodeIds;
-            },
-            clearAllSelectedNodes: function () {
-                nodeList = [];
-            },
-            findSelectedNode: function (value) {
-                for (var i = 0; i < nodeList.length; i++) {
-                    if (nodeList[i].DocumentId == value) {
-                        return true;
-                    }
-                }
-                return false;
-            },
-            getClickedNode: function () {
-                return clickedNode;
-            },
-            setClickedNode: function (value) {
-                clickedNode = value;
-            },
-            getHoveredNode: function () {
-                return hoveredNode;
-            },
-            setHoveredNode: function (value) {
-                hoveredNode = value;
-            },
-            removeHoveredNode: function () {
-                hoveredNode = {};
-            }
-            
-        };
-    });
-
-angular.module('tree.factory', [])
-    .factory('TreeRecursionHelper', ['$compile', '$rootScope'
-        , function ($compile, $rootScope) {
-            var TreeRecursionHelper = {
-                compile: function (element) {
-                    var factory = {};
-                    var contents = element.contents().remove();
-                    var compiledContents;
-
-                    factory = function(scope, element) {
-                        
-                        if (!compiledContents) {
-                            compiledContents = $compile(contents);
-                        }
-
-                        /*Add drag and drop*/
-                        if (scope.node.attr.isEndNode) {
-
-                            var widget = "<div class='ui-widget-header'>" + scope.node.data.title + "</div>";
-
-                            element.draggable({
-                                snap: true,
-                                revert: 'revert',
-                                appendTo: 'body',
-                                cursor: "move",
-                                cursorAt: { top: 5, left: -10 },
-                                helper: function (event) {
-                                    return $(widget);
-                                }
-
-                            });
-                            
-                        }
-                        else {
-                            element.droppable({
-                                hoverClass: 'tf_dropBox_hover',
-                                greedy: true,
-                                drop: function(event, ui) {
-                                    
-                                nodeScope = angular.element(ui.draggable).scope()
-                                nodeParentScope = nodeScope.$parent;
-
-                                if (!(angular.isUndefined(nodeParentScope)
-                                    && angular.isUndefined(nodeParentScope.node)
-                                    && angular.isUndefined(nodeParentScope.node.children)
-                                    && angular.isUndefined(nodeScope.$index)
-                                    )) {
-
-                                    // Remove the old node
-                                    nodeParentScope.node.children.splice(nodeScope.$index, 1);
-
-                                    // Add the new node
-                                    scope.node.children.push(nodeScope.child);
-
-                                    // Save the changes to the scope
-                                    scope.$apply();
-
-                                }   
-
-                                }
-                            });
-                        }
-
-                        compiledContents(scope, function(clone) {
-                            element.append(clone);
-                        });
-
-                    };
-                    return factory;
-                }
-            };
-            return TreeRecursionHelper;
-        }
-    ])
-    .factory('NodesHelper', function (NodeTrackingService) {
-        var NodesHelper = {
-            refreshSelectOrDeselectedBasedOnNodeTrackingService: function (currentNode) {
-                if (currentNode != null) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            if (child.attr.isEndNode && NodeTrackingService.findSelectedNode(child.attr.documentId)) {
-                                child.attr.selected = true;
-                            }
-                            if (child.children) {
-                                // go to the folders children and select
-                                NodesHelper.refreshSelectOrDeselectedBasedOnNodeTrackingService(child);
-                            }
-                        };
-                    }
-                    NodesHelper.findChildNodeAndSetStateOfParentsItterator(currentNode);
-                }
-            },
-            refreshExpandedNodesBasedOnNodeTrackingService: function (currentNode) {
-                if (currentNode != null) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            
-                            if (!child.attr.isEndNode && NodeTrackingService.findExpandedNode(child.attr.documentGroupId)) {
-                                child.attr.expanded = true;
-                            }
-                            if (child.children) {
-                                // go to the folders children and select
-                                NodesHelper.refreshExpandedNodesBasedOnNodeTrackingService(child);
-                            }
-                        };
-                    }
-                }
-            },
-            findChildNodesAndSelectOrDeselect: function (currentNode, documentIdToFind, newValue) {
-
-                if (currentNode != null) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        // We have a folder
-
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            if (child.attr.isEndNode) {
-                                if (child.attr.documentId == documentIdToFind) {
-                                    child.attr.selected = newValue;
-                                    if (newValue == 1) {
-                                        NodeTrackingService.setSelectedNode(child);
-                                    }
-                                    if (newValue == 0) {
-                                        NodeTrackingService.removeSelectedNode(child);
-                                    }
-                                }
-                            } else {
-                                if (child.children) {
-                                    // go to the folders children and select
-                                    NodesHelper.findChildNodesAndSelectOrDeselect(child, documentIdToFind, newValue);
-                                }
-                            }
-                            
-
-                        };
-                    }
-                }
-            },
-            findChildNodeAndSetStateOfParentsItterator: function (currentNode) {
-                if (currentNode != null) {
-                    
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        // We have a folder
-                        var selectedChildCount = 0;
-                        var partiallySelectedCount = 0;
-
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            NodesHelper.findChildNodeAndSetStateOfParentsItterator(child);
-                            if (child.attr.selected == 1) { selectedChildCount = selectedChildCount + 1; }
-                            if (child.attr.selected == 2) { partiallySelectedCount = partiallySelectedCount + 1; }
-                        }
-
-                        // Partially Selected
-                        if (selectedChildCount > 0 || partiallySelectedCount > 0) {
-                            newValue = 2;
-                        }
-                        
-                        // All Children Selected
-                        if (selectedChildCount == currentNode.children.length) {
-                            if (selectedChildCount == 1) {
-                                newValue = currentNode.children[0].attr.selected;
-                            } else {
-                                newValue = 1;
-                            }
-                        }
-                        
-                        // No children selected
-                        if (selectedChildCount == 0 && partiallySelectedCount == 0) {
-                            newValue = 0;
-                        }
-                        currentNode.attr.selected = newValue;
-                    }
-                }
-            },
-            selectParentsChildNodeItterator: function (currentNode, newValue) {
-                
-                if (currentNode != null) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        // We have a folder
-                        var selectedChildCount = 0;
-                        var partiallySelectedCount = 0;
-
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            if (child.attr.selected == 1) { selectedChildCount = selectedChildCount + 1; }
-                            if (child.attr.selected == 2) { partiallySelectedCount = partiallySelectedCount + 1; }
-                        }
-
-                        // Partially Selected
-                        if (selectedChildCount > 0 || partiallySelectedCount > 0) {
-                            newValue = 2;
-                        }
-
-                        // No children selected
-                        if (selectedChildCount == 0 && partiallySelectedCount == 0) {
-                            newValue = 0;
-                        }
-
-                        // All Children Selected
-                        if (selectedChildCount == currentNode.children.length) {
-                            if (selectedChildCount == 1) {
-                                newValue = currentNode.children[0].attr.selected;
-                            }
-                            else {
-                                newValue = 1;
-                            }
-                        }
-                    }
-                    currentNode.attr.selected = newValue;
-                }
-            },
-            selectChildNodeItterator: function (currentNode, newValue) {
-                if (currentNode != null) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        // We have a folder
-
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            var child = currentNode.children[i];
-                            
-                            if (child.attr.show) {
-                                child.attr.selected = newValue;
-                                if (newValue == 1) {
-                                    NodeTrackingService.setSelectedNode(child);
-                                }
-                                if (newValue == 0) {
-                                    NodeTrackingService.removeSelectedNode(child);
-                                }
-                            }
-                            if (child.children) {
-                                // go to the folders children and select
-                                NodesHelper.selectChildNodeItterator(child, newValue);
-                            }
-
-                        };//);
-                    }
-
-                    if (currentNode.attr.show) {
-                        currentNode.attr.selected = newValue;
-                    }
-                }
-            },
-            showParentsNodeItterator: function (currentNode) {
-                if (currentNode != null && !currentNode.attr.isEndNode) {
-                    // We need to go over all of the parents direct child items to work out if this node should be selected or not
-                    if (currentNode.children) {
-                        // We have a folder
-                        var hiddenChildCount = 0;
-                        for (var i = 0; i < currentNode.children.length; i++) {
-                            if (!currentNode.children[i].attr.show) { hiddenChildCount = hiddenChildCount + 1 }
-                        };
-
-                        if (hiddenChildCount == currentNode.children.length) {
-                            currentNode.attr.show = false;
-                        }
-                        else {
-                            currentNode.attr.show = true;
-                        }
-                    }
-                    else {
-                        currentNode.attr.show = true;
-                    }
-                }
-            }
-
-        };
-
-        return NodesHelper;
-    });
-
 angular.module('tree.directive', [])
-    .directive('tree', function ($compile, NodesHelper, NodeTrackingService, TreeRecursionHelper) {
+.directive('tree', function ($compile, NodesHelper, NodeTrackingService, TreeRecursionHelper) {
         return {
             restrict: "A",
+            require: "^tree",
+            transclude: true,
             scope: {
-                node: '='
+                node: '=',
+                type: '='
             },
             replace: false,
-            controller: function ($scope, $rootScope, $location) {
+            controller: function ($scope, $rootScope) {
+                
+                $scope.isReadOnly = true;
 
                 $scope.hover = function () {
                     NodeTrackingService.setHoveredNode($scope.node);
-                    $scope.$emit("hoveredNodeChanged");
+                    $rootScope.$broadcast("hoveredNodeChanged");
                 };
 
                 $scope.exitHover = function () {
                     NodeTrackingService.removeHoveredNode();
-                    $scope.$emit("hoveredNodeChanged");
+                    $rootScope.$broadcast("hoveredNodeExit");
                 };
 
-                $scope.countVisibleChildren = function () {
+                $scope.clickedStartIndex = 0;
+
+                $scope.openDocument = function (event) {
+                    if (ctrlClicked || shiftClicked) {
+                        event.preventDefault();
+                    } else {
+                        // Open document navigation in here
+                    }
+                }
+
+                $scope.clickNode = function (event) {
+
+                    switch (event.which) {
+                        case 1:
+
+                            //left click
+                            if (!(ctrlClicked || shiftClicked)) {
+                                if (!angular.isUndefined($scope.$parent.node)) {
+                                    NodeTrackingService.setClickedNodeIndex($scope.$parent.node.children.indexOf($scope.node));
+                                }
+
+                                if (NodeTrackingService.getClickedNodes().indexOf($scope.node) == -1) {
+                                    // The node has not been selected so clear down all previous selections
+                                    NodeTrackingService.clearClickedNodes();
+                                    NodeTrackingService.addToClickedNodes($scope.node);
+                                    NodeTrackingService.setClickedNode($scope.node);
+                                } 
+                            }
+
+                            if (ctrlClicked) {
+                                event.preventDefault();
+
+                                var previousNode = NodeTrackingService.getClickedNode();
+                                NodeTrackingService.setSelectedNode(previousNode);
+                                NodeTrackingService.addToClickedNodes(previousNode);
+
+                                var clickedNodes = NodeTrackingService.getClickedNodes();
+                                var newSelectedState = 1;
+
+                                // Check that they are all selected
+                                for (var j = 0; j < clickedNodes.length; j++) {
+                                    NodeTrackingService.setSelectedNode($scope.node);
+                                    NodesHelper.selectChildNodeItterator(clickedNodes[j], newSelectedState);
+                                }
+
+                                if (clickedNodes.indexOf($scope.node) == -1) {
+                                    NodeTrackingService.addToClickedNodes($scope.node);
+                                    NodeTrackingService.setSelectedNode($scope.node);
+                                    newSelectedState = 1;
+                                } else {
+                                    NodeTrackingService.removeClickedNode($scope.node);
+                                    NodeTrackingService.removeSelectedNode($scope.node);
+                                    newSelectedState = 0;
+                                }
+
+                                // Select all children
+                                NodesHelper.selectChildNodeItterator($scope.node, newSelectedState);
+
+                                // Emits the select to all parents in scope
+                                $scope.$emit("SelectNodeParents", newSelectedState);
+
+
+                            }
+
+                            if (shiftClicked) {
+
+                                event.preventDefault();
+
+                                var startIndex = NodeTrackingService.getClickedNodeIndex();;
+                                var endIndex = $scope.$parent.node.children.indexOf($scope.node);
+
+                                var beginIndex = startIndex;
+                                var toIndex = endIndex;
+
+                                if (startIndex > endIndex) {
+                                    beginIndex = endIndex;
+                                    toIndex = startIndex;
+                                }
+
+                                NodeTrackingService.clearClickedNodes();
+
+                                for (var i = beginIndex; i <= toIndex; i++) {
+                                    NodeTrackingService.setSelectedNode($scope.$parent.node.children[i]);
+                                    NodeTrackingService.addToClickedNodes($scope.$parent.node.children[i]);
+                                }
+
+                                NodesHelper.refreshSelectOrDeselectedBasedOnNodeTrackingService($scope.$parent.node, false);
+
+                            }
+
+
+                            break;
+                        case 2:
+                            break;
+                        case 3:
+                            // Check to see if the rightclicked item is in the selected list of items
+                            var clickedNodes = NodeTrackingService.getClickedNodes();
+                            var clickedInCurrentSelection = false;
+                            var clickedNode = $scope.node;
+                            for (var i = 0; i < clickedNodes.length; i++) {
+                                var node = clickedNodes[i];
+                                if (node === clickedNode) {
+                                    clickedInCurrentSelection = true;
+                                }
+                            }
+
+                            if (clickedInCurrentSelection) {
+                                NodeTrackingService.setClickedNode($scope.node);
+                            } else {
+                                // remove all previous selections and add just this one
+                                NodeTrackingService.clearClickedNodes();
+                                NodeTrackingService.addToClickedNodes($scope.node);
+                                NodeTrackingService.setSelectedNode($scope.node);
+                                NodeTrackingService.setClickedNode($scope.node);
+                            }
+                            break;
+                    }
+                }
+
+                $scope.isClickedNode = function () {
+                    return NodeTrackingService.isClickedNode($scope.node);
+                };
+
+                $scope.$on('CreateFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+                            $scope.createFolder();
+                        }
+                    }
+                });
+
+                $scope.$on('RenameFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (!angular.isUndefined(NodeTrackingService.getClickedNode().attr) && NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+                            $scope.setIsReadOnly(false);
+                        }
+                    }
+                });
+
+                $scope.$on('CutFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (!angular.isUndefined(NodeTrackingService.getClickedNode().attr) && NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+                            $scope.cut();
+                        }
+                    }
+                });
+
+                $scope.$on('CopyFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (!angular.isUndefined(NodeTrackingService.getClickedNode().attr) && NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+                            $scope.copy();
+                        }
+                    }
+                });
+
+                $scope.$on('PasteFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (!angular.isUndefined(NodeTrackingService.getClickedNode().attr) && NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+                            $scope.paste();
+                        }
+                    }
+                });
+
+                $scope.$on('DeleteFolder', function () {
+                    if ($scope.type == "Folder") {
+                        if (!angular.isUndefined(NodeTrackingService.getClickedNode().attr) && NodeTrackingService.getClickedNode().attr.documentGroupId == $scope.node.attr.documentGroupId && !$scope.node.attr.isEndNode) {
+
+                            $scope.deleteFolders();
+                        }
+                    }
+                });
+
+                $scope.customise = function () {
+                   //Customise / Edit API call here
+                }
+
+
+                $scope.setIsReadOnly = function (isReadOnly) {
+                    $scope.isReadOnly = isReadOnly;
+                }
+
+                $scope.renameNode = function () {
+                    $scope.isReadOnly = true;
+                    // Remane API Call in here
+                };
+
+                $scope.cut = function () {
+                    NodeTrackingService.setIsCutOperation(true);
+                    NodeTrackingService.setCutNodes();
+                    NodeTrackingService.clearClickedNodes();
+                }
+
+                $scope.copy = function () {
+                    NodeTrackingService.setIsCutOperation(false);
+                    NodeTrackingService.setCopiedNodes();
+                    NodeTrackingService.clearClickedNodes();
+                }
+
+
+                $scope.paste = function () {
+                    // Paste api call in here
+                }
+
+                $scope.deleteFolders = function () {
+                    // Delete api call in here
+                }
+
+                $scope.createFolder = function () {
+
+                   //Create API call in here
+
+                };
+
+                // Work out the scopes 
+                $scope.numberOfVisibleChildren = function () {
                     var numberOfVisibleChildren = 0;
-                    for (var i = 0; i < $scope.node.children.length; i++) {
-                        var child = $scope.node.children[i];
-                        if (child.attr.show) {
-                            numberOfVisibleChildren = numberOfVisibleChildren + 1;
+                    if ($scope.node.children) {
+                        for (var i = 0; i < $scope.node.children.length; i++) {
+                            var child = $scope.node.children[i];
+                            if (child.attr.show) {
+                                numberOfVisibleChildren = numberOfVisibleChildren + 1;
+                            }
                         }
                     }
                     return numberOfVisibleChildren;
-                };
+                }
+
 
                 $scope.$on('SelectNodeParents', function (node, value) {
                     NodesHelper.selectParentsChildNodeItterator($scope.node, value);
@@ -429,6 +272,7 @@ angular.module('tree.directive', [])
                     $event.preventDefault();
                     var currentSelectedState = $scope.node.attr.selected;
                     var newSelectedState = 0;
+
                     if (currentSelectedState == 0) {
                         newSelectedState = 1;
                     }
@@ -440,7 +284,7 @@ angular.module('tree.directive', [])
                     }
 
                     $scope.node.attr.selected = newSelectedState;
-                    
+
                     if (newSelectedState == 1) {
                         NodeTrackingService.setSelectedNode($scope.node);
                     }
@@ -451,8 +295,6 @@ angular.module('tree.directive', [])
                     // Select all children
                     NodesHelper.selectChildNodeItterator($scope.node, newSelectedState);
 
-                    $scope.$emit("SaveSelectedNodes", newSelectedState);
-
                     // Emits the select to all parents in scope
                     $scope.$emit("SelectNodeParents", newSelectedState);
 
@@ -460,47 +302,39 @@ angular.module('tree.directive', [])
 
             },
 
-            template: 
-                '<div class="endNode" ng-switch="node.attr.isEndNode" >' +
-                    '<ins ng-switch-when="true" class="leaf" />' +
-                    '<a ng-switch-when="true" href="{{node.attr.href}}}}" context-menu-module isendnode="{{node.attr.isEndNode}}" nodeid="{{node.attr.documentId}}" isdraft="{{node.attr.draft}}" ng-mouseover="hover();" ng-mouseleave="exitHover();">' +
+            template: '' +
+
+                '<div class="endNode nodeListItem" ng-switch="node.attr.isEndNode">' +
+                    '<a draganddrop ng-switch-when="true" ng-click="openDocument($event)" ng-mousedown="clickNode($event)" ng-class="{\'selected\': isClickedNode()}" popover type="{{type}}" isendnode="{{node.attr.isEndNode}}" nodeid="{{node.attr.documentId}}" isdraft="{{node.attr.draft}}" ng-mouseover="hover();" ng-mouseleave="exitHover();">' +
+                        '<ins class="leaf"></ins>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==0" class="checkedNone" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==1" class="checkedImg" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==2" class="checkedSome" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins class="doc" /> ' +
-                        '<span>{{ node.data.title }}</span>' +
+                        '<label class="treeNodeLabel">{{ node.data.title }}</label>' +
                     '</a>' +
-                    '<a ng-switch-when="false" ng-switch="node.attr.expanded" context-menu-module isendnode="{{node.attr.isEndNode}}" nodeid="{{node.attr.documentGroupId}}" isdraft="{{node.attr.draft}}">' +
-                        '<ins ng-switch-when="true" class="open-tree" ng-click="$event.stopPropagation(); expandNode($event);" />' +
-                        '<ins ng-switch-when="false" class="closed" ng-click="$event.stopPropagation(); expandNode($event);" />' +
+
+                    '<a draganddrop  ng-switch-when="false" ng-switch="node.attr.expanded"  ng-mousedown="clickNode($event)" ng-class="{\'selected\': isClickedNode()}" popover type="{{type}}" isendnode="{{node.attr.isEndNode}}" nodeid="{{node.attr.documentGroupId}}" isdraft="{{node.attr.draft}}" documentGroupId="{{node.attr.documentGroupId}}">' +
+                        '<ins ng-switch-when="true" ng-show="node.children.length > 0" class="open-tree" ng-click="$event.stopPropagation(); expandNode($event);"></ins>' +
+                        '<ins ng-switch-when="false" ng-show="node.children.length > 0" class="closed" ng-click="$event.stopPropagation(); expandNode($event);"></ins>' +
+                        '<ins ng-switch-when="true" ng-show="node.children.length == 0" class="folderLeaf"></ins>' +
+                        '<ins ng-switch-when="false" ng-show="node.children.length == 0" class="folderLeaf"></ins>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==0" class="checkedNone" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==1" class="checkedImg" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins ng-if="node.attr.selectable==true && node.attr.selected==2" class="checkedSome" name="$parent.$index" value="node.attr.nodeReference" ng-click="$event.stopPropagation(); select($event)"/>' +
                         '<ins class="folder" />' +
-                        '<label class="isNotSearchResult"> {{ node.data.title }}</label>' +
+                        '<label ng-if="type!=\'Folder\'" class="treeNodeLabel"> {{ node.data.title }} ({{ node.children.length }})</label>' +
+                        '<label ng-if="type==\'Folder\' && node.attr.documentGroupId == 0" class="treeNodeLabel"> {{ node.data.title }} ({{ node.children.length }})</label>' +
+                        '<label ng-if="type==\'Folder\' && node.attr.documentGroupId != 0 && isReadOnly==true" ng-dblclick="setIsReadOnly(false)"  class="treeNodeLabel"> {{ node.data.title }} ({{ node.children.length }})</label>' +
+                        '<input onfocus="this.select();" ng-if="type==\'Folder\' && node.attr.documentGroupId != 0 && isReadOnly==false" ng-readonly="isReadOnly" type="text" ng-model="node.data.title" ng-dblclick="setIsReadOnly(true)" focus-input ng-blur="isReadOnly?return:renameNode();" ng-enter="isReadOnly?return:$event.stopPropagation();renameNode();">' +
                     '</a>' +
                 '</div>' +
 
-                '<div ng-if="node.children && node.attr.expanded" class="node">' +
-                    '<ul ng-if="countVisibleChildren()==\'0\'" >' +
-                        '<li>' +
-                            '<ul>' +
-                                '<li>' +
-                                    '<div class="endNode">' +
-                                        '<ins class="leaf" />' +
-                                        '<a href="#">' +
-                                            '<span> No Results Found </span>' +
-                                        '</a>' +
-                                    '</div>' +
-                                '</li>' +
-                            '</ul>' +
-                        '</li>' +
-                    '</ul>' +
+                '<div ng-if="node.children  && node.children.length > 0 && node.attr.expanded" class="node">' +
                     '<ul>' +
                         '<li ng-repeat="child in node.children track by $index " ng-show="child.attr.show">' +
                             '<ul>' +
-                                '<li ng-if="!$last" class="dots" tree node="child" type="type" ></li>' +
-                                '<li ng-if="$last" tree node="child" type="type"></li>' +
+                                '<li tree ng-class="{\'folderdots \': !$last}" node="child" type="type"></li>' +
                             '</ul>' +
                         '</li>' +
                     '</ul>' +
@@ -510,3 +344,4 @@ angular.module('tree.directive', [])
             }
         };
     });
+  

@@ -73,10 +73,41 @@
     <!-- endbuild -->
 
     <link href="scripts/modules/tree/theme/style.css" rel="stylesheet" />
+    <script src="scripts/modules/tree/service.js"></script>
+    <script src="scripts/modules/tree/factory.js"></script>
     <script src="scripts/modules/tree/treeModule.js"></script>
     <script src="scripts/modules/contextMenu/contextMenuModule.js"></script>
       <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/themes/smoothness/jquery-ui.css" />
 <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.0/jquery-ui.min.js"></script>
+      
+      <script>
+
+    var shiftClicked = false;
+    var ctrlClicked = false;
+
+    $(window).bind('keydown', function (event) {
+
+        if (event.which === 17) {
+            ctrlClicked = true;
+        }
+        if (event.which === 16) {
+            shiftClicked = true;
+        }
+
+    });
+
+    $(window).bind('keyup', function (event) {
+
+        if (event.which === 17) {
+            ctrlClicked = false;
+        }
+        if (event.which === 16) {
+            shiftClicked = false;
+        }
+
+    });
+
+</script>
       
 </body>
 </html>
